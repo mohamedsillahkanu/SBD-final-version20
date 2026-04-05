@@ -339,39 +339,44 @@
         el.disabled=!!disabled;
     }
 
+    // Structure: loc[district][chiefdom][phu][community] = [schools]
     window.afCascade=function(level){
         const loc=getLoc();
-        const d=()=>document.getElementById('af_district')?.value||'';
-        const c=()=>document.getElementById('af_chiefdom')?.value||'';
-        const s=()=>'';
-        const f=()=>document.getElementById('af_facility')?.value||'';
-        const co=()=>document.getElementById('af_community')?.value||'';
+        const d  =()=>document.getElementById('af_district' )?.value||'';
+        const c  =()=>document.getElementById('af_chiefdom' )?.value||'';
+        const f  =()=>document.getElementById('af_facility' )?.value||'';
+        const co =()=>document.getElementById('af_community')?.value||'';
 
-        const resetBelow=(...ids)=>ids.forEach(id=>{const el=document.getElementById(id);if(el){el.innerHTML='<option value="">All</option>';el.disabled=true;}});
+        const resetBelow=(...ids)=>ids.forEach(id=>{
+            const el=document.getElementById(id);
+            if(el){el.innerHTML='<option value="">All</option>';el.disabled=true;}
+        });
 
         if(level==='district'){
-            resetBelow('af_chiefdom','af_section','af_facility','af_community','af_school');
-            if(d()&&loc[d()])afOpt('af_chiefdom',Object.keys(loc[d()]),false);
+            resetBelow('af_chiefdom','af_facility','af_community','af_school');
+            if(d()&&loc[d()]) afOpt('af_chiefdom',Object.keys(loc[d()]),false);
+
         }else if(level==='chiefdom'){
             resetBelow('af_facility','af_community','af_school');
-            if(d()&&c()&&loc[d()]?.[c()])afOpt('af_facility',Object.keys(loc[d()][c()]),false);
-        }else if(level==='section'){
-            resetBelow('af_facility','af_community','af_school');
+            if(d()&&c()&&loc[d()]?.[c()]) afOpt('af_facility',Object.keys(loc[d()][c()]),false);
 
         }else if(level==='facility'){
             resetBelow('af_community','af_school');
-            if(d()&&c()&&s()&&f()&&loc[d()]?.[c()]?.[s()]?.[f()])afOpt('af_community',Object.keys(loc[d()][c()][s()][f()]),false);
+            if(d()&&c()&&f()&&loc[d()]?.[c()]?.[f()])
+                afOpt('af_community',Object.keys(loc[d()][c()][f()]),false);
+
         }else if(level==='community'){
             resetBelow('af_school');
-            const schools=loc[d()]?.[c()]?.[s()]?.[f()]?.[co()];
-            if(schools)afOpt('af_school',schools,false);
+            const schools=loc[d()]?.[c()]?.[f()]?.[co()];
+            if(schools) afOpt('af_school',schools,false);
         }
         runAnalysis();
     };
 
     window.clearAnalysisFilters=function(){
-        ['af_chiefdom','af_section','af_facility','af_community','af_school'].forEach(id=>{
-            const el=document.getElementById(id);if(el){el.innerHTML='<option value="">All</option>';el.disabled=true;}
+        ['af_chiefdom','af_facility','af_community','af_school'].forEach(id=>{
+            const el=document.getElementById(id);
+            if(el){el.innerHTML='<option value="">All</option>';el.disabled=true;}
         });
         const dd=document.getElementById('af_district');if(dd)dd.value='';
         runAnalysis();
@@ -379,25 +384,26 @@
 
     function initDistrictFilter(){
         const dd=document.getElementById('af_district');if(!dd)return;
-        if(dd.options.length>1)return;
         const loc=getLoc();
-        Object.keys(loc).sort().forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;dd.appendChild(o);});
+        const districts=Object.keys(loc).sort();
+        // Always rebuild — loc may not have been available last call
+        dd.innerHTML='<option value="">All Districts</option>';
+        districts.forEach(d=>{const o=document.createElement('option');o.value=o.textContent=d;dd.appendChild(o);});
+        if(districts.length===0) console.warn('[Analysis] District filter empty — ALL_LOCATION_DATA keys:',Object.keys(window.ALL_LOCATION_DATA||{}));
     }
 
     function getFilteredData(allRows){
         let rows=[...allRows];
-        const fD=document.getElementById('af_district')?.value||'';
-        const fC=document.getElementById('af_chiefdom')?.value||'';
-        const fS=document.getElementById('af_section')?.value||'';
-        const fF=document.getElementById('af_facility')?.value||'';
+        const fD  =document.getElementById('af_district' )?.value||'';
+        const fC  =document.getElementById('af_chiefdom' )?.value||'';
+        const fF  =document.getElementById('af_facility' )?.value||'';
         const fCom=document.getElementById('af_community')?.value||'';
-        const fSch=document.getElementById('af_school')?.value||'';
-        const lc=s=>s.toLowerCase();
-        if(fD)   rows=rows.filter(r=>lc(r.district||''   )===lc(fD));
-        if(fC)   rows=rows.filter(r=>lc(r.chiefdom||''   )===lc(fC));
-        if(fS)   rows=rows.filter(r=>lc(r.section_loc||'')===lc(fS));
-        if(fF)   rows=rows.filter(r=>lc(r.facility||''   )===lc(fF));
-        if(fCom) rows=rows.filter(r=>lc(r.community||''  )===lc(fCom));
+        const fSch=document.getElementById('af_school'   )?.value||'';
+        const lc=s=>(s||'').toLowerCase();
+        if(fD)   rows=rows.filter(r=>lc(r.district ||'')===lc(fD));
+        if(fC)   rows=rows.filter(r=>lc(r.chiefdom ||'')===lc(fC));
+        if(fF)   rows=rows.filter(r=>lc(r.facility ||'')===lc(fF));
+        if(fCom) rows=rows.filter(r=>lc(r.community||'')===lc(fCom));
         if(fSch) rows=rows.filter(r=>lc(r.school_name||'')===lc(fSch));
         return rows;
     }
