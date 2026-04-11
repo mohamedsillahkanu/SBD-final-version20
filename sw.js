@@ -1,7 +1,7 @@
 // ============================================================
 //  SBD 2026 — ITN Distribution Survey · Service Worker
 //  BUMP THIS VERSION STRING every time you upload new files:
-const CACHE_VERSION = 'sbd-2026-v9';
+const CACHE_VERSION = 'sbd-2026-v11';
 // ============================================================
 
 // ── YOUR MAIN APP FILES ───────────────────────────────────────
@@ -29,8 +29,7 @@ const MODULE_FILES = [
   './monitoring.html',
   './itn_reconciliation.html',
   './device_tracking.html',
-  './attendance_payment.html',
-  './distribution_report.html',
+
 ];
 
 // ── CDN LIBRARIES ─────────────────────────────────────────────
@@ -46,6 +45,8 @@ const CDN_FILES = [
 // ── OPTIONAL (cached if they exist, silently skipped if not) ──
 const OPTIONAL_FILES = [
   './ICF-SL.jpg',
+  './attendance_payment.html',
+  './distribution_report.html',
   './infographics.png',
   './logo_mohs.png',
   './logo_nmcp.png',
@@ -132,11 +133,10 @@ self.addEventListener('fetch', event => {
     caches.match(event.request).then(cached => {
       if (cached) {
         // Serve from cache instantly + refresh in background
-        fetch(event.request)
+        fetch(event.request.clone())
           .then(r => {
             if (r && r.status === 200) {
-              const rc = r.clone();
-              caches.open(CACHE_VERSION).then(c => c.put(event.request, rc));
+              caches.open(CACHE_VERSION).then(c => c.put(event.request, r));
             }
           })
           .catch(() => {});
@@ -146,7 +146,8 @@ self.addEventListener('fetch', event => {
       return fetch(event.request)
         .then(r => {
           if (!r || r.status !== 200) return r;
-          caches.open(CACHE_VERSION).then(c => c.put(event.request, r.clone()));
+          const toCache = r.clone();
+          caches.open(CACHE_VERSION).then(c => c.put(event.request, toCache));
           return r;
         })
         .catch(() => {
