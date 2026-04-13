@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>ICF‑SL · ITN Reconciliation Dashboard</title>
+<meta name="theme-color" content="#004080">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#004080;--navy2:#0056b3;--gold:#ffc107;--gold2:#e6a800;
+  --green:#1a7a3c;--green-l:#e8f5ee;--green-b:#b2dfcc;
+  --red:#c0392b;--red-l:#fff0ee;--red-b:#f5b7b1;
+  --amber:#e67e22;--amber-l:#fef5e7;--amber-b:#f9ca8e;
+  --blue:#2196F3;--blue-l:#e3f2fd;
+  --gray:#f4f6f9;--border:#dee2e6;--txt:#1a2533;--txt2:#5a6a7a;
+}
+body{font-family:'Oswald',sans-serif;background:var(--gray);color:var(--txt);min-height:100vh}
+
+/* ── HEADER ── */
+.hdr{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--gold);box-shadow:0 4px 16px rgba(0,20,60,.3)}
+.hdr-logo{width:48px;height:48px;background:#fff;border-radius:10px;border:2px solid var(--gold);overflow:hidden;flex-shrink:0}
+.hdr-logo img{width:100%;height:100%;object-fit:cover}
+.hdr-txt h1{font-size:1.25rem;font-weight:700;color:#fff;letter-spacing:.5px}
+.hdr-txt p{font-size:.68rem;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.6px}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.hdr-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:600;letter-spacing:.4px}
+.hdr-badge.live{background:rgba(40,167,69,.3);border-color:rgba(40,167,69,.5);animation:pulse-live 2s ease-in-out infinite}
+@keyframes pulse-live{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── TOOLBAR ── */
+.toolbar{background:#fff;border-bottom:2px solid var(--border);padding:10px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-lbl{font-size:.7rem;color:var(--txt2);text-transform:uppercase;font-weight:600;white-space:nowrap}
+.filter-sel{border:2px solid var(--border);border-radius:8px;padding:7px 12px;font-family:'Oswald',sans-serif;font-size:.82rem;outline:none;background:#fff;color:var(--txt);cursor:pointer;min-width:140px}
+.filter-sel:focus{border-color:var(--navy)}
+.btn{background:var(--navy);border:none;border-radius:8px;padding:8px 16px;color:#fff;font-family:'Oswald',sans-serif;font-size:.8rem;font-weight:600;letter-spacing:.4px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .2s}
+.btn:hover:not(:disabled){background:var(--navy2);transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:#fff;border:2px solid var(--navy);color:var(--navy)}
+.btn-outline:hover:not(:disabled){background:var(--navy);color:#fff}
+.refresh-info{margin-left:auto;font-size:.7rem;color:var(--txt2);white-space:nowrap}
+.spin{animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+
+/* ── MAIN ── */
+.main{max-width:1100px;margin:0 auto;padding:20px 16px}
+
+/* ── KPI CARDS ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:12px;padding:16px;border:2px solid var(--border);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.kpi.received::before{background:var(--blue)}
+.kpi.distributed::before{background:var(--green)}
+.kpi.remaining::before{background:var(--amber)}
+.kpi.utilisation::before{background:var(--navy)}
+.kpi.phus::before{background:var(--gold)}
+.kpi-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;margin-bottom:8px;font-size:1.1rem}
+.kpi.received .kpi-icon{background:var(--blue-l);color:var(--blue)}
+.kpi.distributed .kpi-icon{background:var(--green-l);color:var(--green)}
+.kpi.remaining .kpi-icon{background:var(--amber-l);color:var(--amber)}
+.kpi.utilisation .kpi-icon{background:#e8edf4;color:var(--navy)}
+.kpi.phus .kpi-icon{background:#fff8e1;color:var(--gold2)}
+.kpi-val{font-size:1.8rem;font-weight:700;color:var(--txt);line-height:1}
+.kpi-lbl{font-size:.65rem;text-transform:uppercase;color:var(--txt2);letter-spacing:.5px;margin-top:4px}
+.kpi-sub{font-size:.7rem;color:var(--txt2);margin-top:2px}
+
+/* ── SECTION HEADER ── */
+.section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.section-hdr h2{font-size:1rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.5px}
+.section-hdr .pill{background:var(--navy);color:#fff;font-size:.65rem;padding:2px 9px;border-radius:20px;font-weight:600}
+
+/* ── DISTRICT CARDS ── */
+.district-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:22px}
+.d-card{background:#fff;border-radius:14px;border:2px solid var(--border);overflow:hidden;transition:box-shadow .2s}
+.d-card:hover{box-shadow:0 8px 24px rgba(0,64,128,.12)}
+.d-hdr{background:linear-gradient(135deg,var(--navy),var(--navy2));padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+.d-hdr h3{color:#fff;font-size:.9rem;font-weight:700;letter-spacing:.4px}
+.d-util-badge{background:rgba(255,255,255,.2);color:#fff;font-size:.78rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.3)}
+.d-body{padding:14px}
+.d-bar-wrap{margin-bottom:12px}
+.d-bar-lbl{display:flex;justify-content:space-between;font-size:.7rem;color:var(--txt2);margin-bottom:4px}
+.d-bar-track{background:#e9ecef;border-radius:20px;height:10px;overflow:hidden}
+.d-bar-fill{height:100%;border-radius:20px;transition:width .8s ease}
+.d-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.d-stat{text-align:center;background:var(--gray);border-radius:8px;padding:8px 4px}
+.d-stat-val{font-size:1.1rem;font-weight:700;color:var(--navy)}
+.d-stat-lbl{font-size:.6rem;text-transform:uppercase;color:var(--txt2);letter-spacing:.3px}
+.d-expand-btn{width:100%;background:none;border:1px solid var(--border);border-radius:8px;padding:7px;font-family:'Oswald',sans-serif;font-size:.75rem;color:var(--navy);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .2s;font-weight:600}
+.d-expand-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* ── CHIEFDOM TABLE (expand) ── */
+.chiefdom-panel{display:none;padding:12px 14px;border-top:2px solid var(--border);background:var(--gray)}
+.chiefdom-panel.open{display:block}
+.c-table{width:100%;border-collapse:collapse;font-size:.75rem}
+.c-table th{background:var(--navy);color:#fff;padding:7px 10px;text-align:left;font-weight:600;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px}
+.c-table td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.c-table tr:hover td{background:rgba(0,64,128,.04)}
+.c-table tr:last-child td{border-bottom:none}
+
+/* ── PHU TABLE ── */
+.phu-section{background:#fff;border-radius:14px;border:2px solid var(--border);overflow:hidden;margin-bottom:22px}
+.phu-table-wrap{overflow-x:auto}
+.phu-table{width:100%;border-collapse:collapse;font-size:.75rem}
+.phu-table th{background:var(--navy);color:#fff;padding:10px 12px;text-align:left;white-space:nowrap;font-size:.68rem;text-transform:uppercase;letter-spacing:.4px;cursor:pointer;user-select:none}
+.phu-table th:hover{background:var(--navy2)}
+.phu-table td{padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.phu-table tr:hover td{background:rgba(0,64,128,.04)}
+.phu-table tr:last-child td{border-bottom:none}
+.phu-table .sticky{position:sticky;left:0;background:#fff;z-index:1;border-right:2px solid var(--border)}
+.phu-table th.sticky{background:var(--navy);z-index:2}
+
+/* ── UTIL BAR (inline) ── */
+.util-bar{display:flex;align-items:center;gap:6px;min-width:120px}
+.util-bar-track{flex:1;background:#e9ecef;border-radius:20px;height:7px;overflow:hidden}
+.util-bar-fill{height:100%;border-radius:20px}
+.util-pct{font-size:.75rem;font-weight:700;min-width:34px;text-align:right}
+
+/* ── BADGES ── */
+.badge{font-size:.63rem;font-weight:700;padding:2px 8px;border-radius:12px;display:inline-block;white-space:nowrap}
+.badge-green  {background:var(--green-l);color:var(--green);border:1px solid var(--green-b)}
+.badge-amber  {background:var(--amber-l);color:var(--amber);border:1px solid var(--amber-b)}
+.badge-red    {background:var(--red-l);color:var(--red);border:1px solid var(--red-b)}
+.badge-blue   {background:var(--blue-l);color:var(--blue)}
+.badge-gray   {background:#f0f0f0;color:#888}
+.badge-over   {background:#fff0ff;color:#8e24aa;border:1px solid #e1bee7}
+
+/* ── CHARTS ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px}
+@media(max-width:600px){.charts-row{grid-template-columns:1fr}}
+.chart-card{background:#fff;border-radius:12px;border:2px solid var(--border);padding:16px}
+.chart-card h3{font-size:.82rem;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:14px}
+.chart-wrap{position:relative;height:200px}
+
+/* ── LOADING / EMPTY ── */
+.loading-box{background:#fff;border-radius:12px;border:2px solid var(--border);padding:40px;text-align:center}
+.loading-spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+.loading-txt{font-size:.85rem;color:var(--txt2)}
+.empty-icon{font-size:2.5rem;margin-bottom:10px}
+.empty-msg{font-size:.85rem;color:var(--txt2)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 22px;border-radius:30px;box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:9999;opacity:0;visibility:hidden;transition:.25s;font-size:.82rem;white-space:nowrap}
+.toast.show{opacity:1;visibility:visible}
+.toast.error{background:var(--red)}
+.toast.info{background:var(--navy)}
+
+/* ── RESPONSIVE ── */
+@media(max-width:600px){
+  .kpi-val{font-size:1.4rem}
+  .d-stats{grid-template-columns:1fr 1fr}
+  .hdr-badge.dt{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-logo">
+    <img src="ICF-SL.jpg" alt="ICF"
+         onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 fill=%22%23004080%22/><text x=%2212%22 y=%2265%22 fill=%22%23ffc107%22 font-size=%2226%22 font-weight=%22bold%22>ICF</text></svg>'">
+  </div>
+  <div class="hdr-txt">
+    <h1>ITN RECONCILIATION</h1>
+    <p>Received vs Distributed · Sierra Leone 2026</p>
+  </div>
+  <div class="hdr-right">
+    <span class="hdr-badge live" id="liveBadge">● LIVE</span>
+    <span class="hdr-badge dt" id="lastUpdatedBadge">—</span>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <span class="filter-lbl">District</span>
+  <select class="filter-sel" id="filterDistrict">
+    <option value="">All Districts</option>
+  </select>
+  <span class="filter-lbl">Chiefdom</span>
+  <select class="filter-sel" id="filterChiefdom" disabled>
+    <option value="">All Chiefdoms</option>
+  </select>
+  <button class="btn" id="refreshBtn" onclick="loadAll()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M21 2v6h-6M3 12a9 9 0 0115.36-6.36L21 8M3 22v-6h6M21 12a9 9 0 01-15.36 6.36L3 16"/></svg>
+    <span id="refreshLabel">REFRESH</span>
+  </button>
+  <button class="btn btn-outline" onclick="exportCSV()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+    EXPORT
+  </button>
+  <span class="refresh-info" id="refreshInfo">Not yet loaded</span>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main" id="mainContent">
+  <div class="loading-box" id="loadingBox">
+    <div class="loading-spinner"></div>
+    <div class="loading-txt" id="loadingTxt">Loading data from ICF-SL Server…</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════
+const GAS_URL  = 'https://script.google.com/macros/s/AKfycbymRy-M5v0fVLWUjw4IXYhd1oIR2ZvnP_Dzr_iGR-Th0cMIpmE2ntGeujWYH7-C6NHIzA/exec';
+const SHEET_ID = '1cXlYiTMzcRP1BCj9mt1JXoK_pjgWbRtDEEQUPMg2HPs';
+
+// ── Data stores ──
+let receivedData    = [];   // rows from "PHU Receipts" sheet
+let distributedData = [];   // rows from main "Submissions" / "Responses" sheet
+let reconciled      = [];   // merged by district|chiefdom|phu key
+let autoTimer       = null;
+let countdown       = 60;
+
+// ── Filter state ──
+let selDistrict = '', selChiefdom = '';
+
+// ═══════════════════════════════════
+// FETCH — try GAS then CSV fallback
+// ═══════════════════════════════════
+async function fetchJSON(action, timeout=15000){
+  try{
+    const res = await Promise.race([
+      fetch(GAS_URL+'?action='+action),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),timeout))
+    ]);
+    if(res.ok){ const d=await res.json(); return Array.isArray(d)?d:(d.rows||d.data||[]); }
+  }catch(e){ console.warn('[Recon]',action,'failed:',e.message); }
+  return [];
+}
+
+async function fetchCSVSheet(sheetName){
+  // Direct CSV export from Google Sheets tab
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  return new Promise(resolve=>{
+    Papa.parse(url,{download:true,header:true,skipEmptyLines:true,complete:r=>resolve(r.data||[]),error:()=>resolve([])});
+  });
+}
+
+// ═══════════════════════════════════
+// LOAD ALL DATA
+// ═══════════════════════════════════
+async function loadAll(){
+  setLoading(true);
+  document.getElementById('refreshLabel').innerHTML = '<span class="spin">↻</span> LOADING…';
+
+  // Fetch both sheets in parallel
+  const [recv, dist] = await Promise.all([
+    fetchJSON('getPHUReceipts'),   // PHU Receipts sheet — from itn_received.html
+    fetchJSON('getData')           // Survey Responses sheet — from SBD form
+  ]);
+
+  receivedData    = recv;
+  distributedData = dist;
+  reconciled      = reconcile(recv, dist);
+
+  buildFilters();
+  render();
+  setLoading(false);
+
+  const now = new Date();
+  document.getElementById('lastUpdatedBadge').textContent = 'Updated '+now.toLocaleTimeString('en-SL',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('refreshInfo').textContent = `${receivedData.length} receipts · ${distributedData.length} distributions · ${reconciled.length} PHUs matched`;
+  document.getElementById('refreshLabel').textContent = `↻ REFRESH (${countdown}s)`;
+
+  startAutoRefresh();
+  toast('Data loaded — '+reconciled.length+' PHUs reconciled','success');
+}
+
+// ═══════════════════════════════════
+// RECONCILE
+// Key: district|chiefdom|phu (normalised lowercase)
+// ═══════════════════════════════════
+function norm(s){ return (s||'').toString().trim().toLowerCase(); }
+
+function reconcile(recv, dist){
+  // ── Aggregate received ITNs per PHU ──
+  const recvMap = {};
+  recv.forEach(r=>{
+    const key = norm(r.district)+'|'+norm(r.chiefdom||r.Chiefdom)+'|'+norm(r.phu||r.PHU||r['Name of PHU']);
+    if(!recvMap[key]) recvMap[key] = {
+      district:  (r.district||'').trim(),
+      chiefdom:  (r.chiefdom||r.Chiefdom||'').trim(),
+      phu:       (r.phu||r.PHU||r['Name of PHU']||'').trim(),
+      received:0, receipts:0, receivedIG2:0, receivedPBO:0, discrepancies:0
+    };
+    const m = recvMap[key];
+    m.received    += parseInt(r.receivedTotal||r.received_total||r.total||0)||0;
+    m.receivedIG2 += parseInt(r.receivedIG2||r.received_ig2||0)||0;
+    m.receivedPBO += parseInt(r.receivedPBO||r.received_pbo||0)||0;
+    m.receipts    += 1;
+    if(parseInt(r.variance||0)!==0) m.discrepancies += 1;
+  });
+
+  // ── Aggregate distributed ITNs per PHU ──
+  const distMap = {};
+  dist.forEach(r=>{
+    const key = norm(r.district)+'|'+norm(r.chiefdom)+'|'+norm(r.facility||r.phu||r['Name of PHU']);
+    if(!distMap[key]) distMap[key] = {
+      district: (r.district||'').trim(),
+      chiefdom: (r.chiefdom||'').trim(),
+      phu:      (r.facility||r.phu||r['Name of PHU']||'').trim(),
+      distributed:0, schools:0, pupils:0, ig2:0, pbo:0
+    };
+    const m = distMap[key];
+    m.distributed += parseInt(r.total_itn||r.totalITN||r.itns_distributed||0)||0;
+    m.schools     += 1;
+    m.pupils      += parseInt(r.total_pupils||r.totalPupils||0)||0;
+    m.ig2         += parseInt(r.ig2_distributed||0)||0;
+    m.pbo         += parseInt(r.pbo_distributed||0)||0;
+  });
+
+  // ── Merge — union of all PHU keys ──
+  const allKeys = new Set([...Object.keys(recvMap), ...Object.keys(distMap)]);
+  const rows = [];
+  allKeys.forEach(key=>{
+    const rv = recvMap[key]  || {received:0,receipts:0,receivedIG2:0,receivedPBO:0,discrepancies:0,district:'',chiefdom:'',phu:''};
+    const dv = distMap[key]  || {distributed:0,schools:0,pupils:0,ig2:0,pbo:0,district:'',chiefdom:'',phu:''};
+    const district  = rv.district  || dv.district  || '';
+    const chiefdom  = rv.chiefdom  || dv.chiefdom  || '';
+    const phu       = rv.phu       || dv.phu       || '';
+    const received    = rv.received;
+    const distributed = dv.distributed;
+    const remaining   = received - distributed;
+    const utilPct     = received > 0 ? Math.round((distributed/received)*100) : (distributed>0?999:0);
+    const status = distributed===0&&received===0 ? 'no-data'
+                 : distributed===0              ? 'not-started'
+                 : utilPct >= 100               ? (utilPct>100?'over':'complete')
+                 : utilPct >= 80                ? 'good'
+                 : utilPct >= 50                ? 'partial'
+                 :                               'low';
+    rows.push({ key,district,chiefdom,phu,received,distributed,remaining,utilPct,status,
+                receipts:rv.receipts, schools:dv.schools, pupils:dv.pupils,
+                discrepancies:rv.discrepancies, ig2:rv.receivedIG2, pbo:rv.receivedPBO });
+  });
+  return rows.sort((a,b)=>a.district.localeCompare(b.district)||a.chiefdom.localeCompare(b.chiefdom)||a.phu.localeCompare(b.phu));
+}
+
+// ═══════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════
+function buildFilters(){
+  const districts = [...new Set(reconciled.map(r=>r.district))].filter(Boolean).sort();
+  const dSel = document.getElementById('filterDistrict');
+  dSel.innerHTML = '<option value="">All Districts</option>';
+  districts.forEach(d=>{ const o=document.createElement('option');o.value=o.textContent=d;dSel.appendChild(o); });
+}
+
+document.getElementById('filterDistrict').addEventListener('change', function(){
+  selDistrict = this.value;
+  selChiefdom = '';
+  const cSel = document.getElementById('filterChiefdom');
+  cSel.innerHTML = '<option value="">All Chiefdoms</option>';
+  if(selDistrict){
+    const chiefdoms = [...new Set(reconciled.filter(r=>r.district===selDistrict).map(r=>r.chiefdom))].filter(Boolean).sort();
+    chiefdoms.forEach(c=>{ const o=document.createElement('option');o.value=o.textContent=c;cSel.appendChild(o); });
+    cSel.disabled = false;
+  } else { cSel.disabled = true; }
+  render();
+});
+document.getElementById('filterChiefdom').addEventListener('change', function(){
+  selChiefdom = this.value;
+  render();
+});
+
+function filtered(){
+  return reconciled.filter(r=>
+    (!selDistrict  || r.district === selDistrict) &&
+    (!selChiefdom  || r.chiefdom === selChiefdom)
+  );
+}
+
+// ═══════════════════════════════════
+// RENDER
+// ═══════════════════════════════════
+function render(){
+  const rows = filtered();
+  const main = document.getElementById('mainContent');
+  if(!rows.length){
+    main.innerHTML = `<div class="loading-box"><div class="empty-icon">📊</div><div class="empty-msg">No data found. <button class="btn" onclick="loadAll()" style="margin-top:12px">↻ Load Data</button></div></div>`;
+    return;
+  }
+
+  // ── Aggregates ──
+  const totRecv = rows.reduce((s,r)=>s+r.received,0);
+  const totDist = rows.reduce((s,r)=>s+r.distributed,0);
+  const totRem  = totRecv - totDist;
+  const totUtil = totRecv>0 ? Math.round((totDist/totRecv)*100) : 0;
+  const totPHUs = rows.length;
+  const totSchools = rows.reduce((s,r)=>s+r.schools,0);
+  const totPupils  = rows.reduce((s,r)=>s+r.pupils,0);
+
+  // ── District aggregates ──
+  const byDistrict = {};
+  rows.forEach(r=>{
+    if(!byDistrict[r.district]) byDistrict[r.district]={district:r.district,received:0,distributed:0,phus:0,schools:0,chiefdoms:new Set()};
+    const d=byDistrict[r.district];
+    d.received+=r.received; d.distributed+=r.distributed; d.phus++; d.schools+=r.schools;
+    d.chiefdoms.add(r.chiefdom);
+  });
+
+  // ── Chart data ──
+  const dNames = Object.keys(byDistrict).sort();
+  const chartRecv = dNames.map(d=>byDistrict[d].received);
+  const chartDist = dNames.map(d=>byDistrict[d].distributed);
+  const chartUtil = dNames.map(d=>byDistrict[d].received>0?Math.round((byDistrict[d].distributed/byDistrict[d].received)*100):0);
+
+  main.innerHTML = `
+    <!-- KPIs -->
+    <div class="kpi-grid">
+      <div class="kpi received">
+        <div class="kpi-icon">📥</div>
+        <div class="kpi-val">${fmt(totRecv)}</div>
+        <div class="kpi-lbl">ITNs Received</div>
+        <div class="kpi-sub">${totPHUs} PHUs · ${rows.filter(r=>r.receipts>0).length} confirmed</div>
+      </div>
+      <div class="kpi distributed">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-val">${fmt(totDist)}</div>
+        <div class="kpi-lbl">ITNs Distributed</div>
+        <div class="kpi-sub">${fmt(totSchools)} schools · ${fmt(totPupils)} pupils</div>
+      </div>
+      <div class="kpi remaining">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-val" style="color:${totRem<0?'var(--red)':totRem===0?'var(--green)':'var(--amber)'};">${fmt(totRem)}</div>
+        <div class="kpi-lbl">Remaining</div>
+        <div class="kpi-sub">${totRem<0?'⛔ Over-distributed':'ITNs not yet distributed'}</div>
+      </div>
+      <div class="kpi utilisation">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-val" style="color:${totUtil>=80?'var(--green)':totUtil>=50?'var(--amber)':'var(--red)'};">${totUtil}%</div>
+        <div class="kpi-lbl">Overall Utilisation</div>
+        <div class="kpi-sub">${rows.filter(r=>r.status==='complete'||r.status==='good').length} PHUs ≥80%</div>
+      </div>
+      <div class="kpi phus">
+        <div class="kpi-icon">🏥</div>
+        <div class="kpi-val">${totPHUs}</div>
+        <div class="kpi-lbl">PHUs Tracked</div>
+        <div class="kpi-sub">
+          ${rows.filter(r=>r.status==='complete').length} complete ·
+          ${rows.filter(r=>r.status==='not-started').length} not started
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>📊 Received vs Distributed by District</h3>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>📈 Utilisation Rate by District</h3>
+        <div class="chart-wrap"><canvas id="utilChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- District Cards -->
+    <div class="section-hdr">
+      <h2>District Breakdown</h2>
+      <span class="pill">${Object.keys(byDistrict).length} Districts</span>
+    </div>
+    <div class="district-grid" id="districtGrid">
+      ${dNames.map(d=>districtCard(byDistrict[d], rows.filter(r=>r.district===d))).join('')}
+    </div>
+
+    <!-- PHU Table -->
+    <div class="section-hdr">
+      <h2>PHU Level Detail</h2>
+      <span class="pill">${rows.length} PHUs</span>
+    </div>
+    <div class="phu-section">
+      <div class="phu-table-wrap">
+        <table class="phu-table" id="phuTable">
+          <thead>
+            <tr>
+              <th class="sticky" onclick="sortTable('phu')">PHU ↕</th>
+              <th onclick="sortTable('district')">District ↕</th>
+              <th onclick="sortTable('chiefdom')">Chiefdom ↕</th>
+              <th onclick="sortTable('received')">Received ↕</th>
+              <th onclick="sortTable('distributed')">Distributed ↕</th>
+              <th onclick="sortTable('remaining')">Remaining ↕</th>
+              <th onclick="sortTable('utilPct')">Utilisation ↕</th>
+              <th onclick="sortTable('schools')">Schools ↕</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r=>phuRow(r)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  // ── Draw charts ──
+  drawBarChart(dNames, chartRecv, chartDist);
+  drawUtilChart(dNames, chartUtil);
+
+  // ── Expand buttons ──
+  document.querySelectorAll('.d-expand-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const panel = document.getElementById('panel-'+btn.dataset.district);
+      if(!panel) return;
+      const open = panel.classList.toggle('open');
+      btn.textContent = open ? '▲ HIDE CHIEFDOMS' : '▼ VIEW CHIEFDOMS';
+    });
+  });
+}
+
+// ── District card HTML ──
+function districtCard(d, rows){
+  const utilPct = d.received>0 ? Math.round((d.distributed/d.received)*100) : 0;
+  const barColor = utilColor(utilPct);
+  const byChiefdom = {};
+  rows.forEach(r=>{
+    if(!byChiefdom[r.chiefdom]) byChiefdom[r.chiefdom]={chiefdom:r.chiefdom,received:0,distributed:0,phus:0};
+    byChiefdom[r.chiefdom].received+=r.received;
+    byChiefdom[r.chiefdom].distributed+=r.distributed;
+    byChiefdom[r.chiefdom].phus++;
+  });
+  const chiefdoms = Object.values(byChiefdom).sort((a,b)=>a.chiefdom.localeCompare(b.chiefdom));
+  const safeId = d.district.replace(/[^a-z0-9]/gi,'_');
+
+  return `
+    <div class="d-card">
+      <div class="d-hdr">
+        <h3>${d.district}</h3>
+        <span class="d-util-badge">${utilPct}% utilised</span>
+      </div>
+      <div class="d-body">
+        <div class="d-bar-wrap">
+          <div class="d-bar-lbl"><span>Utilisation</span><span>${fmt(d.distributed)} / ${fmt(d.received)}</span></div>
+          <div class="d-bar-track"><div class="d-bar-fill" style="width:${Math.min(utilPct,100)}%;background:${barColor}"></div></div>
+        </div>
+        <div class="d-stats">
+          <div class="d-stat"><div class="d-stat-val" style="color:var(--blue)">${fmt(d.received)}</div><div class="d-stat-lbl">Received</div></div>
+          <div class="d-stat"><div class="d-stat-val" style="color:var(--green)">${fmt(d.distributed)}</div><div class="d-stat-lbl">Distributed</div></div>
+          <div class="d-stat"><div class="d-stat-val" style="color:${d.received-d.distributed<0?'var(--red)':'var(--amber)'};">${fmt(d.received-d.distributed)}</div><div class="d-stat-lbl">Remaining</div></div>
+        </div>
+        <button class="d-expand-btn" data-district="${safeId}">▼ VIEW CHIEFDOMS (${chiefdoms.length})</button>
+      </div>
+      <div class="chiefdom-panel" id="panel-${safeId}">
+        <table class="c-table">
+          <thead><tr><th>Chiefdom</th><th>PHUs</th><th>Received</th><th>Distributed</th><th>Remaining</th><th>Utilisation</th></tr></thead>
+          <tbody>
+            ${chiefdoms.map(c=>{
+              const u = c.received>0?Math.round((c.distributed/c.received)*100):0;
+              const rem = c.received-c.distributed;
+              return `<tr>
+                <td><strong>${c.chiefdom}</strong></td>
+                <td>${c.phus}</td>
+                <td style="color:var(--blue)">${fmt(c.received)}</td>
+                <td style="color:var(--green)">${fmt(c.distributed)}</td>
+                <td style="color:${rem<0?'var(--red)':rem===0?'var(--green)':'var(--amber)'};">${fmt(rem)}</td>
+                <td>${utilBarHTML(u)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ── PHU row HTML ──
+function phuRow(r){
+  const st = statusBadge(r.status, r.utilPct);
+  return `<tr>
+    <td class="sticky"><strong>${r.phu||'—'}</strong></td>
+    <td>${r.district}</td>
+    <td>${r.chiefdom}</td>
+    <td style="color:var(--blue);font-weight:600">${fmt(r.received)}</td>
+    <td style="color:var(--green);font-weight:600">${fmt(r.distributed)}</td>
+    <td style="color:${r.remaining<0?'var(--red)':r.remaining===0?'var(--green)':'var(--amber)'}; font-weight:600">${fmt(r.remaining)}</td>
+    <td>${utilBarHTML(r.utilPct)}</td>
+    <td>${r.schools}</td>
+    <td>${st}</td>
+  </tr>`;
+}
+
+// ── Util bar HTML ──
+function utilBarHTML(pct){
+  const disp = pct===999 ? '>100' : pct;
+  const fill = Math.min(pct===999?100:pct, 100);
+  return `<div class="util-bar">
+    <div class="util-bar-track"><div class="util-bar-fill" style="width:${fill}%;background:${utilColor(pct)}"></div></div>
+    <span class="util-pct" style="color:${utilColor(pct)}">${disp}%</span>
+  </div>`;
+}
+
+function utilColor(pct){
+  if(pct===999||pct>100) return '#8e24aa';
+  if(pct>=80) return 'var(--green)';
+  if(pct>=50) return 'var(--amber)';
+  if(pct===0) return '#ccc';
+  return 'var(--red)';
+}
+
+function statusBadge(status, pct){
+  const map = {
+    'complete':     ['badge-green', '✓ Complete'],
+    'good':         ['badge-green', `✓ Good (${pct}%)`],
+    'partial':      ['badge-amber', `⚡ Partial (${pct}%)`],
+    'low':          ['badge-red',   `⚠ Low (${pct}%)`],
+    'not-started':  ['badge-gray',  '○ Not Started'],
+    'no-data':      ['badge-gray',  '— No Data'],
+    'over':         ['badge-over',  `⛔ Over (${pct}%)`],
+  };
+  const [cls, lbl] = map[status]||['badge-gray','—'];
+  return `<span class="badge ${cls}">${lbl}</span>`;
+}
+
+// ═══════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════
+let barChartInst=null, utilChartInst=null;
+
+function drawBarChart(labels, recv, dist){
+  if(barChartInst) barChartInst.destroy();
+  const ctx = document.getElementById('barChart')?.getContext('2d');
+  if(!ctx) return;
+  barChartInst = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Received', data:recv, backgroundColor:'rgba(33,150,243,.7)', borderColor:'rgba(33,150,243,1)', borderWidth:2, borderRadius:4},
+        {label:'Distributed', data:dist, backgroundColor:'rgba(26,122,60,.7)', borderColor:'rgba(26,122,60,1)', borderWidth:2, borderRadius:4}
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{labels:{font:{family:'Oswald'},boxWidth:12}}},
+      scales:{y:{beginAtZero:true,ticks:{font:{family:'Oswald'},callback:v=>v>=1000?Math.round(v/1000)+'k':v}},x:{ticks:{font:{family:'Oswald'}}}}
+    }
+  });
+}
+
+function drawUtilChart(labels, utils){
+  if(utilChartInst) utilChartInst.destroy();
+  const ctx = document.getElementById('utilChart')?.getContext('2d');
+  if(!ctx) return;
+  const colors = utils.map(v=>v>=80?'rgba(26,122,60,.8)':v>=50?'rgba(230,126,34,.8)':'rgba(192,57,43,.8)');
+  utilChartInst = new Chart(ctx,{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[{
+        label:'Utilisation %', data:utils, backgroundColor:colors,
+        borderColor:colors, borderWidth:2, borderRadius:4
+      }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{beginAtZero:true,max:110,ticks:{font:{family:'Oswald'},callback:v=>v+'%'},
+           grid:{color:'rgba(0,0,0,.05)'}},
+        x:{ticks:{font:{family:'Oswald'}}}
+      }
+    }
+  });
+}
+
+// ═══════════════════════════════════
+// SORT TABLE
+// ═══════════════════════════════════
+let sortKey='district', sortAsc=true;
+function sortTable(key){
+  if(sortKey===key) sortAsc=!sortAsc; else {sortKey=key;sortAsc=false;}
+  reconciled.sort((a,b)=>{
+    const av=a[key], bv=b[key];
+    if(typeof av==='number') return sortAsc?av-bv:bv-av;
+    return sortAsc?String(av).localeCompare(String(bv)):String(bv).localeCompare(String(av));
+  });
+  const tbody = document.querySelector('#phuTable tbody');
+  if(tbody) tbody.innerHTML = filtered().map(r=>phuRow(r)).join('');
+}
+
+// ═══════════════════════════════════
+// EXPORT CSV
+// ═══════════════════════════════════
+function exportCSV(){
+  const rows = filtered();
+  if(!rows.length){toast('No data to export','error');return;}
+  const cols = ['district','chiefdom','phu','received','distributed','remaining','utilPct','schools','pupils','receipts','status'];
+  const csv = [cols.join(','), ...rows.map(r=>cols.map(c=>`"${r[c]??''}"`).join(','))].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'itn_reconciliation_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+  toast('Exported '+rows.length+' rows','success');
+}
+
+// ═══════════════════════════════════
+// AUTO REFRESH
+// ═══════════════════════════════════
+function startAutoRefresh(){
+  if(autoTimer) clearInterval(autoTimer);
+  countdown = 60;
+  autoTimer = setInterval(()=>{
+    countdown--;
+    const btn = document.getElementById('refreshLabel');
+    if(btn) btn.textContent = countdown<=0?'↻ REFRESHING…':`↻ REFRESH (${countdown}s)`;
+    if(countdown<=0){ countdown=60; loadAll(); }
+  },1000);
+}
+
+// ═══════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════
+function fmt(n){ return (parseInt(n)||0).toLocaleString(); }
+function setLoading(on){
+  const lb=document.getElementById('loadingBox');
+  if(lb) lb.style.display=on?'block':'none';
+}
+function toast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className=`toast show ${type==='error'?'error':type==='info'?'info':''}`;
+  setTimeout(()=>t.className='toast',3000);
+}
+
+// ── Boot ──
+loadAll();
+</script>
+</body>
+</html>
