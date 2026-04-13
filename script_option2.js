@@ -477,13 +477,11 @@ function startApp(displayName, isAdmin) {
     setupPhoneValidation();
     setupNameValidation();
     setupCalculations();
-    setupAutoSave();
     initAllSignaturePads();
     captureGPS();
     setDefaultDate();
     updateProgress();
     updateSummaryBadge();
-    restoreDraftIfExists();
 
     showNotification('Welcome to ICF Collect!', 'success');
 }
@@ -1302,6 +1300,25 @@ window.closeSummaryModal = function() {
     if (modal) modal.classList.remove('show');
 };
 
+window.openDataEntry = function() {
+    // Reset to section 1 every time data entry is opened
+    state.currentSection = 1;
+    document.querySelectorAll('.form-section').forEach(function(s) { s.classList.remove('active'); });
+    var sec1 = document.querySelector('.form-section[data-section="1"]');
+    if (sec1) sec1.classList.add('active');
+    updateProgress();
+    // Reset entry method selection
+    window._entryMethod = null;
+    var mb = document.getElementById('method-next-btn');
+    if (mb) { mb.disabled = true; mb.style.opacity = '.45'; mb.style.cursor = 'not-allowed'; }
+    var qrBtn = document.getElementById('method-qr-btn');
+    var manBtn = document.getElementById('method-manual-btn');
+    if (qrBtn)  { qrBtn.style.border  = '3px solid #dde3ee'; qrBtn.style.background  = '#f0f4f8'; }
+    if (manBtn) { manBtn.style.border = '3px solid #dde3ee'; manBtn.style.background = '#f0f4f8'; }
+    var hint = document.getElementById('method-hint');
+    if (hint) hint.textContent = 'Tap a method above to continue';
+};
+
 window.viewSummary = function() { openSummaryModal(); };
 
 // ============================================
@@ -1878,93 +1895,13 @@ function clearSignature() { clearTeamSignature(1); clearTeamSignature(2); }
 // Saves every field change to localStorage automatically.
 // Restores silently on next load — no banners, no buttons.
 // ============================================
-const DRAFT_KEY = 'itn_single_draft';
-
-function collectDraftData() {
-    const formData = new FormData(document.getElementById('dataForm'));
-    const data = {
-        _savedAt:        new Date().toISOString(),
-        _currentSection: state.currentSection,
-        itn_type:        'Dual-AI',
-        itn_type_pbo:    false,
-        itn_type_ig2:    false,
-    };
-    for (const [k, v] of formData.entries()) data[k] = v;
-    return data;
-}
-
-function autoSaveDraft() {
-    try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraftData()));
-    } catch(e) {}
-}
-
-function clearDraft() {
-    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
-    state.currentDraftId = null;
-    state.drafts = [];
-    saveToStorage();
-    updateCounts();
-}
-
-// Called from startApp — silently restores previous session if exists
-function restoreDraftIfExists() {
-    try {
-        const raw = localStorage.getItem(DRAFT_KEY);
-        if (!raw) return;
-        const draft = JSON.parse(raw);
-        if (!draft || !draft._savedAt) return;
-        _applyDraft(draft);
-    } catch(e) { console.warn('[AutoSave] Restore failed:', e.message); }
-}
-
-function _applyDraft(draft) {
-    const geoChain = [
-        ['district',    draft.district],
-        ['chiefdom',    draft.chiefdom],
-        ['facility',    draft.facility],
-        ['community',   draft.community],
-        ['school_name', draft.school_name]
-    ];
-    let delay = 0;
-    geoChain.forEach(([elId, val]) => {
-        if (!val) return;
-        setTimeout(() => {
-            const el = document.getElementById(elId);
-            if (el) { el.value = val; el.dispatchEvent(new Event('change')); }
-        }, delay);
-        delay += 120;
-    });
-
-    const skip = new Set([
-        '_savedAt','_currentSection','itn_type_pbo','itn_type_ig2',
-        'district','chiefdom','facility','community','school_name'
-    ]);
-    setTimeout(() => {
-        Object.entries(draft).forEach(([k, v]) => {
-            if (skip.has(k)) return;
-            const el = document.getElementById(k);
-            if (el && el.type !== 'hidden') el.value = v;
-        });
-        // ITN type is Dual-AI — no checkbox restore needed
-
-        const sec = parseInt(draft._currentSection) || 1;
-        document.querySelectorAll('.form-section').forEach(s => s.classList.remove('active'));
-        state.currentSection = sec;
-        document.querySelector('.form-section[data-section="'+sec+'"]')?.classList.add('active');
-        updateProgress();
-        calculateAll();
-    }, delay + 100);
-}
-
-function setupAutoSave() {
-    const form = document.getElementById('dataForm');
-    if (!form) return;
-    let _t = null;
-    const trigger = () => { clearTimeout(_t); _t = setTimeout(autoSaveDraft, 600); };
-    form.addEventListener('input',  trigger);
-    form.addEventListener('change', trigger);
-}
+// Draft save removed — no auto-save, always start fresh
+function collectDraftData()    { return {}; }
+function autoSaveDraft()       {}
+function clearDraft()          { try { localStorage.removeItem('itn_single_draft'); } catch(e) {} updateCounts(); }
+function restoreDraftIfExists(){ /* no-op */ }
+function _applyDraft()         { /* no-op */ }
+function setupAutoSave()       { /* no-op — draft save removed */ }
 
 // ── No-op stubs (keep compat with any old HTML references) ───
 window.saveDraftNow       = function() {};
