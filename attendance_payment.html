@@ -88,8 +88,8 @@
         .badge-warning  { background: rgba(245,158,11,0.2); color: #fcd34d; }
         .device-status-badge svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
         .device-person { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #fff; letter-spacing: 2px; line-height: 1.1; }
-        .device-phone  { font-size: 14px; color: rgba(255,255,255,0.6); margin-top: 4px; font-weight: 500; }
-        .device-code-display { margin-top: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 5px; }
+        .device-sub    { font-size: 13px; color: rgba(255,255,255,0.65); margin-top: 4px; font-weight: 500; }
+        .device-code-display { margin-top: 10px; font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; }
         .gold-top .device-code-display   { color: var(--gold); }
         .green-top .device-code-display  { color: #6ee7b7; }
         .red-top .device-code-display    { color: #fca5a5; }
@@ -141,8 +141,7 @@
         .history-info { flex: 1; min-width: 0; }
         .history-name { font-weight: 600; font-size: 13px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .history-meta { font-size: 10px; color: var(--text-light); margin-top: 1px; }
-        .history-code { font-family: 'Bebas Neue', sans-serif; font-size: 16px; letter-spacing: 1px; color: var(--navy); }
-        .history-empty { padding: 30px; text-align: center; font-size: 13px; color: var(--text-light); }
+        .history-code { font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 1px; color: var(--navy); }
 
         /* STATS */
         .stats-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
@@ -152,15 +151,12 @@
         .stat-box.gold-s::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
         .stat-box.green-s::before{ background: linear-gradient(90deg, var(--green), #34d399); }
         .stat-box.red-s::before  { background: linear-gradient(90deg, var(--red), #f87171); }
-        .stat-box.teal-s::before { background: linear-gradient(90deg, var(--teal), #2dd4bf); }
-        .stat-box.full { grid-column: span 2; }
         .stat-label { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; color: var(--text-light); text-transform: uppercase; margin-bottom: 6px; }
         .stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; line-height: 1; }
         .stat-box.navy .stat-value   { color: var(--navy); }
         .stat-box.gold-s .stat-value { color: var(--gold-dark); }
         .stat-box.green-s .stat-value{ color: var(--green-dark); }
         .stat-box.red-s .stat-value  { color: var(--red-dark); }
-        .stat-box.teal-s .stat-value { color: var(--teal-dark); }
         .stat-sub { font-size: 10px; color: var(--text-light); margin-top: 2px; font-weight: 600; }
 
         /* USERS TABLE */
@@ -209,8 +205,12 @@
 <div class="tabs-container">
     <div class="tab-bar">
         <button class="tab-btn signin active" onclick="switchTab('signin')">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-            ATTENDANCE
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            SIGN IN
+        </button>
+        <button class="tab-btn signout" onclick="switchTab('signout')">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            SIGN OUT
         </button>
         <button class="tab-btn stats" onclick="switchTab('stats')">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
@@ -221,71 +221,38 @@
 
 <div class="main">
 
-    <!-- SIGN IN / SIGN OUT — single panel -->
+    <!-- SIGN IN -->
     <div class="tab-panel active" id="panel-signin">
-
-        <!-- SESSION USER CARD — shown after first scan -->
-        <div id="session-card" style="display:none;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);overflow:hidden;margin-bottom:16px;">
-            <div id="session-top" style="background:linear-gradient(135deg,var(--navy-mid),var(--navy));padding:18px 20px;text-align:center;">
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,.5);margin-bottom:6px;">LOGGED IN AS</div>
-                <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--gold);letter-spacing:2px;" id="session-name">—</div>
-                <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:4px;" id="session-meta">—</div>
-                <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;" id="session-status"></div>
+        <div class="scanner-card">
+            <div class="scanner-header gold">
+                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                <span class="scanner-title">SCAN SBD ID TO SIGN IN</span>
             </div>
-            <div style="padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                <button onclick="doSignIn()" id="btn-signin"
-                    style="padding:16px;background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:var(--navy);border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                    SIGN IN
-                </button>
-                <button onclick="doSignOut()" id="btn-signout"
-                    style="padding:16px;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;border:none;border-radius:12px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                    SIGN OUT
-                </button>
-            </div>
-            <div style="padding:0 16px 14px;text-align:center;">
-                <button onclick="clearSession()"
-                    style="background:none;border:1px solid #ddd;border-radius:8px;padding:6px 16px;font-family:'Bebas Neue',sans-serif;font-size:12px;letter-spacing:1px;color:#aaa;cursor:pointer;">
-                    ⬅ LOGOUT / SCAN DIFFERENT PERSON
-                </button>
-            </div>
-        </div>
-
-        <!-- SCANNER — shown when no session -->
-        <div id="scan-section">
-            <div class="scanner-card">
-                <div class="scanner-header gold">
-                    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
-                    <span class="scanner-title">SCAN SBD ID CARD ONCE</span>
-                </div>
-                <div class="scanner-body">
-                    <div id="scan-area-signin">
-                        <div class="scan-overlay" id="overlay-signin">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
-                            <p>Scan once — then sign in or out anytime</p>
-                            <button class="scan-btn gold-btn" onclick="startScan('signin')">
-                                <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                                START SCANNER
-                            </button>
-                        </div>
-                        <div id="reader-signin" style="display:none;"></div>
-                        <div style="text-align:center;display:none;" id="stop-signin">
-                            <button class="scan-btn stop-btn" onclick="stopScan('signin')" style="margin-top:12px;">STOP</button>
-                        </div>
+            <div class="scanner-body">
+                <div id="scan-area-signin">
+                    <div class="scan-overlay" id="overlay-signin">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
+                        <p>Point camera at the SBD staff ID QR code</p>
+                        <button class="scan-btn gold-btn" onclick="startScan('signin')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            START SCANNER
+                        </button>
+                    </div>
+                    <div id="reader-signin" style="display:none;"></div>
+                    <div style="text-align:center;display:none;" id="stop-signin">
+                        <button class="scan-btn stop-btn" onclick="stopScan('signin')" style="margin-top:12px;">STOP SCANNER</button>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="msg-card" id="msg-signin"></div>
         <div class="device-card" id="device-signin"></div>
+        <div class="msg-card" id="msg-signin"></div>
         <div class="history-card">
             <div class="history-header">
                 <span class="history-title">TODAY'S SIGN-INS</span>
                 <span class="history-count" id="signin-count">0</span>
             </div>
-            <div class="history-list" id="signin-list"><div class="history-empty">No sign-ins today</div></div>
+            <div class="history-list" id="signin-list"><div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No sign-ins today</div></div>
         </div>
     </div>
 
@@ -294,13 +261,13 @@
         <div class="scanner-card">
             <div class="scanner-header green-hd">
                 <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                <span class="scanner-title">SCAN ID TO SIGN OUT</span>
+                <span class="scanner-title">SCAN SBD ID TO SIGN OUT</span>
             </div>
             <div class="scanner-body">
                 <div id="scan-area-signout">
                     <div class="scan-overlay" id="overlay-signout">
                         <svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="4" height="4"/></svg>
-                        <p>Point camera at the staff ID QR code</p>
+                        <p>Point camera at the SBD staff ID QR code</p>
                         <button class="scan-btn green-btn" onclick="startScan('signout')">
                             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
                             START SCANNER
@@ -320,7 +287,7 @@
                 <span class="history-title">TODAY'S SIGN-OUTS</span>
                 <span class="history-count" id="signout-count">0</span>
             </div>
-            <div class="history-list" id="signout-list"><div class="history-empty">No sign-outs today</div></div>
+            <div class="history-list" id="signout-list"><div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No sign-outs today</div></div>
         </div>
     </div>
 
@@ -346,16 +313,15 @@
                 <div class="stat-sub">Sign In Only</div>
             </div>
         </div>
-
         <div class="users-card">
             <div class="users-header">
                 <div class="users-header-title">STAFF ATTENDANCE</div>
                 <div class="users-header-badge" id="usersCount">0 STAFF</div>
             </div>
             <div class="users-search">
-                <input type="text" placeholder="Search by name or ID..." id="searchUsers" oninput="renderUsers()">
+                <input type="text" placeholder="Search by name, ID, role or district..." id="searchUsers" oninput="renderUsers()">
             </div>
-            <div class="users-list" id="usersList"><div class="history-empty">No attendance data yet</div></div>
+            <div class="users-list" id="usersList"><div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No attendance data yet</div></div>
         </div>
     </div>
 
@@ -366,42 +332,71 @@
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbymRy-M5v0fVLWUjw4IXYhd1oIR2ZvnP_Dzr_iGR-Th0cMIpmE2ntGeujWYH7-C6NHIzA/exec';
 
-var signIns     = JSON.parse(localStorage.getItem('att_signins')  || '[]');
-var signOuts    = JSON.parse(localStorage.getItem('att_signouts') || '[]');
-var sessionUser = JSON.parse(localStorage.getItem('att_session_user') || 'null');
+var signIns  = JSON.parse(localStorage.getItem('att_signins')  || '[]');
+var signOuts = JSON.parse(localStorage.getItem('att_signouts') || '[]');
 var scanners = {};
 
 function getToday() { return new Date().toISOString().split('T')[0]; }
 
+/* ─────────────────────────────────────────────────────────────
+   parseQR — handles the SBD ID card QR format:
+     Name: Aminata Koroma
+     ID: SBD-079123456
+     Role: District Supervisor
+     District: Port Loko
+     Tel: 079123456
+   Also falls back to JSON or raw text.
+───────────────────────────────────────────────────────────── */
 function parseQR(text) {
+    var result = { code:'', name:'', tel:'', role:'', district:'' };
+
+    // Try SBD plain-text format first (key: value per line)
+    if (text.indexOf('Name:') !== -1 || text.indexOf('ID:') !== -1) {
+        text.split('\n').forEach(function(line) {
+            var sep = line.indexOf(':');
+            if (sep === -1) return;
+            var key = line.substring(0, sep).trim().toLowerCase();
+            var val = line.substring(sep + 1).trim();
+            if (key === 'name')     result.name     = val;
+            if (key === 'id')       result.code     = val;
+            if (key === 'role')     result.role     = val;
+            if (key === 'district') result.district = val;
+            if (key === 'tel')      result.tel      = val;
+        });
+        // Fallback code to tel if ID missing
+        if (!result.code && result.tel) result.code = 'SBD-' + result.tel;
+        return result;
+    }
+
+    // Try JSON
     try {
         var obj = JSON.parse(text);
         return {
-            code:      obj.code || obj.id || obj.ID || text,
-            name:      obj.name || obj.Name || obj.fullName || '',
-            phone:     obj.phone || obj.Phone || '',
-            district:  obj.district || obj.District || '',
-            chiefdom:  obj.chiefdom || obj.Chiefdom || '',
-            facility:  obj.facility || obj.Facility || '',
-            community: obj.community || obj.Community || '',
-            role:      obj.role || obj.Role || ''
+            code:     obj.id || obj.ID || obj.code || text,
+            name:     obj.name || obj.Name || obj.fullName || '',
+            tel:      obj.tel || obj.telephone || obj.phone || '',
+            role:     obj.role || obj.Role || '',
+            district: obj.district || obj.District || ''
         };
-    } catch(e) {
-        return { code: text.trim(), name: '', phone: '', district: '', chiefdom: '', facility: '', community: '', role: '' };
-    }
+    } catch(e) {}
+
+    // Raw fallback
+    return { code: text.trim(), name:'', tel:'', role:'', district:'' };
 }
 
-// ── TABS ─────────────────────────────────────────────────────
+// ── TABS ────────────────────────────────────────────────────
 function switchTab(tab) {
     document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
     document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
     document.querySelector('.tab-btn.' + tab).classList.add('active');
     document.getElementById('panel-' + tab).classList.add('active');
-    Object.keys(scanners).forEach(function(k){ if(scanners[k]){ try{scanners[k].stop();}catch(e){} scanners[k]=null; } });
+    Object.keys(scanners).forEach(function(k){
+        if(scanners[k]){ try{scanners[k].stop();}catch(e){} scanners[k]=null; }
+    });
     if (tab === 'stats') updateStats();
 }
 
-// ── SCANNER ───────────────────────────────────────────────────
+// ── SCANNER ─────────────────────────────────────────────────
 function startScan(mode) {
     var overlay  = document.getElementById('overlay-' + mode);
     var readerEl = document.getElementById('reader-' + mode);
@@ -426,7 +421,9 @@ function startScan(mode) {
         },
         function() {}
     ).catch(function() {
-        overlay.style.display = 'block'; readerEl.style.display = 'none'; stopEl.style.display = 'none';
+        overlay.style.display = 'block';
+        readerEl.style.display = 'none';
+        stopEl.style.display = 'none';
         showNotif('Camera access denied', 'error');
     });
 }
@@ -442,132 +439,61 @@ function stopScan(mode) {
     }
 }
 
-// ── HANDLE SCAN ───────────────────────────────────────────────
+// ── HANDLE SCAN ─────────────────────────────────────────────
 function handleScan(mode, text) {
-    var data = parseQR(text);
-    if (!data.name && !data.code) { showNotif('Invalid QR — use your SBD ID card', 'error'); return; }
-    // Save session user — no re-scan needed
-    sessionUser = data;
-    localStorage.setItem('att_session_user', JSON.stringify(sessionUser));
-    showSessionCard(data);
-    showNotif('QR scanned — select Sign In or Sign Out', 'success');
-}
-
-function showSessionCard(data) {
-    document.getElementById('scan-section').style.display = 'none';
-    document.getElementById('session-card').style.display = 'block';
-    document.getElementById('session-name').textContent = data.name || data.code || '—';
-    document.getElementById('session-meta').textContent =
-        [data.role, data.district, data.chiefdom||data.facility].filter(Boolean).join(' · ');
-    updateSessionButtons(data);
-}
-
-function updateSessionButtons(data) {
-    var today   = getToday();
-    var code    = (data || sessionUser || {}).code;
-    var btnIn   = document.getElementById('btn-signin');
-    var btnOut  = document.getElementById('btn-signout');
-    var statEl  = document.getElementById('session-status');
-    var doneIn  = signIns.find(function(s){ return s.code === code && s.date === today; });
-    var doneOut = signOuts.find(function(s){ return s.code === code && s.date === today; });
-
-    // Update SIGN IN button
-    if (btnIn) {
-        btnIn.disabled = !!doneIn;
-        btnIn.style.opacity = doneIn ? '0.6' : '1';
-        btnIn.innerHTML = doneIn
-            ? '✅ SIGNED IN<br><span style="font-size:11px;letter-spacing:0;">' + new Date(doneIn.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</span>'
-            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg> SIGN IN';
+    var data  = parseQR(text);
+    var today = getToday();
+    if (!data.code) {
+        showNotif('Invalid QR — not an SBD ID card', 'error');
+        return;
     }
-
-    // Update SIGN OUT button
-    if (btnOut) {
-        btnOut.disabled = !!doneOut || !doneIn;
-        btnOut.style.opacity = (doneOut || !doneIn) ? '0.6' : '1';
-        btnOut.innerHTML = doneOut
-            ? '✅ SIGNED OUT<br><span style="font-size:11px;letter-spacing:0;">' + new Date(doneOut.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</span>'
-            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> SIGN OUT';
-    }
-
-    // Status badges
-    if (statEl) {
-        var badges = '';
-        if (doneIn)  badges += '<span style="background:rgba(40,167,69,.25);color:#6ee7b7;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;">IN ' + new Date(doneIn.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</span>';
-        if (doneOut) badges += '<span style="background:rgba(255,193,7,.25);color:#fcd34d;padding:3px 10px;border-radius:10px;font-size:10px;font-weight:700;letter-spacing:1px;">OUT ' + new Date(doneOut.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) + '</span>';
-        if (!doneIn && !doneOut) badges = '<span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);padding:3px 10px;border-radius:10px;font-size:10px;letter-spacing:1px;">No record today</span>';
-        statEl.innerHTML = badges;
-    }
+    if (mode === 'signin')  handleSignIn(data, today);
+    else                    handleSignOut(data, today);
 }
 
-function clearSession() {
-    sessionUser = null;
-    localStorage.removeItem('att_session_user');
-    document.getElementById('session-card').style.display = 'none';
-    document.getElementById('scan-section').style.display = 'block';
-    document.getElementById('msg-signin').classList.remove('show');
-    document.getElementById('device-signin').classList.remove('show');
-}
-
-function doSignIn() {
-    if (!sessionUser) { showNotif('Scan your ID card first', 'error'); return; }
-    var data = sessionUser, today = getToday();
+function handleSignIn(data, today) {
     var already = signIns.find(function(s){ return s.code === data.code && s.date === today; });
-    if (already) { showNotif('Already signed in today at ' + new Date(already.timestamp).toLocaleTimeString(), 'error'); return; }
-    var record = { action:'SIGN_IN', code:data.code, name:data.name||'', phone:data.phone||'',
-        district:data.district||'', chiefdom:data.chiefdom||'', facility:data.facility||'',
-        role:data.role||'', date:today, timestamp:new Date().toISOString() };
-    signIns.push(record);
-    localStorage.setItem('att_signins', JSON.stringify(signIns));
-    submitToSheets(record, function() {
-        showNotif('✅ ' + (data.name||'') + ' signed in at ' + new Date().toLocaleTimeString(), 'success');
-        updateHistory();
-        updateSessionButtons(data);
-    });
+    if (already) {
+        showUserCard('signin', data, 'orange-top', 'badge-warning', 'ALREADY SIGNED IN',
+            'Signed in today at ' + new Date(already.timestamp).toLocaleTimeString(), false);
+        return;
+    }
+    showUserCard('signin', data, 'gold-top', 'badge-register', 'READY TO SIGN IN', null, true);
 }
 
-function doSignOut() {
-    if (!sessionUser) { showNotif('Scan your ID card first', 'error'); return; }
-    var data = sessionUser, today = getToday();
+function handleSignOut(data, today) {
     var signedIn = signIns.find(function(s){ return s.code === data.code && s.date === today; });
-    if (!signedIn) { showNotif('Cannot sign out — not signed in today', 'error'); return; }
+    if (!signedIn) {
+        showUserCard('signout', data, 'red-top', 'badge-error', 'NOT SIGNED IN',
+            'This person has not signed in today.', false);
+        return;
+    }
     var already = signOuts.find(function(s){ return s.code === data.code && s.date === today; });
-    if (already) { showNotif('Already signed out today at ' + new Date(already.timestamp).toLocaleTimeString(), 'error'); return; }
-    var record = { action:'SIGN_OUT', code:data.code, name:data.name||'', phone:data.phone||'',
-        district:data.district||'', chiefdom:data.chiefdom||'', facility:data.facility||'',
-        role:data.role||'', date:today, timestamp:new Date().toISOString() };
-    signOuts.push(record);
-    localStorage.setItem('att_signouts', JSON.stringify(signOuts));
-    submitToSheets(record, function() {
-        showNotif('✅ ' + (data.name||'') + ' signed out at ' + new Date().toLocaleTimeString(), 'success');
-        updateHistory();
-        updateSessionButtons(data);
-    });
+    if (already) {
+        showUserCard('signout', data, 'orange-top', 'badge-warning', 'ALREADY SIGNED OUT',
+            'Signed out today at ' + new Date(already.timestamp).toLocaleTimeString(), false);
+        return;
+    }
+    showUserCard('signout', data, 'green-top', 'badge-returned', 'READY TO SIGN OUT', null, true);
 }
 
-// Keep legacy functions for signout tab compatibility
-function handleSignIn(data, today) {}
-function handleSignOut(data, today) {}
-function confirmSignIn() {}
-function confirmSignOut() {}
-
-// ── CONFIRM ───────────────────────────────────────────────────
+// ── CONFIRM ─────────────────────────────────────────────────
 function confirmSignIn() {
     var card = document.getElementById('device-signin');
     var data = JSON.parse(card.dataset.userData);
     var btn  = card.querySelector('.action-btn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner-sm"></div> PROCESSING...';
-
-    var record = { action:'SIGN_IN', code:data.code, name:data.name||'', phone:data.phone||'',
-        district:data.district||'', chiefdom:data.chiefdom||'', facility:data.facility||'',
-        community:data.community||'', role:data.role||'',
-        date:getToday(), timestamp:new Date().toISOString() };
-
+    var record = {
+        action: 'SIGN_IN', code: data.code, name: data.name,
+        tel: data.tel, role: data.role, district: data.district,
+        date: getToday(), timestamp: new Date().toISOString()
+    };
     signIns.push(record);
     localStorage.setItem('att_signins', JSON.stringify(signIns));
     submitToSheets(record, function() {
         card.classList.remove('show');
-        showMessage('signin', 'success', 'SIGNED IN', (data.name||data.code),
+        showMessage('signin', 'success', 'SIGNED IN', data.name || data.code,
             'Signed in at ' + new Date().toLocaleTimeString());
         updateHistory();
         showNotif('Sign-in recorded!', 'success');
@@ -580,54 +506,59 @@ function confirmSignOut() {
     var btn  = card.querySelector('.action-btn');
     btn.disabled = true;
     btn.innerHTML = '<div class="spinner-sm"></div> PROCESSING...';
-
-    var record = { action:'SIGN_OUT', code:data.code, name:data.name||'', phone:data.phone||'',
-        district:data.district||'', chiefdom:data.chiefdom||'', facility:data.facility||'',
-        community:data.community||'', role:data.role||'',
-        date:getToday(), timestamp:new Date().toISOString() };
-
+    var record = {
+        action: 'SIGN_OUT', code: data.code, name: data.name,
+        tel: data.tel, role: data.role, district: data.district,
+        date: getToday(), timestamp: new Date().toISOString()
+    };
     signOuts.push(record);
     localStorage.setItem('att_signouts', JSON.stringify(signOuts));
     submitToSheets(record, function() {
         card.classList.remove('show');
-        showMessage('signout', 'success', 'SIGNED OUT', (data.name||data.code),
+        showMessage('signout', 'success', 'SIGNED OUT', data.name || data.code,
             'Signed out at ' + new Date().toLocaleTimeString());
         updateHistory();
         showNotif('Sign-out recorded!', 'success');
     });
 }
 
-// ── DISPLAY ───────────────────────────────────────────────────
+// ── DISPLAY ─────────────────────────────────────────────────
 function showUserCard(mode, data, topClass, badgeClass, badgeText, note, showAction) {
     var card = document.getElementById('device-' + mode);
     document.getElementById('msg-' + mode).classList.remove('show');
 
-    var badgeIcon = {
-        'badge-register': '<svg viewBox="0 0 24 24" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
-        'badge-returned': '<svg viewBox="0 0 24 24" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',
-        'badge-error':    '<svg viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
-        'badge-warning':  '<svg viewBox="0 0 24 24" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>'
-    }[badgeClass] || '';
+    var badgeIcons = {
+        'badge-register': '<svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>',
+        'badge-returned': '<svg viewBox="0 0 24 24" stroke-width="2" fill="none"><polyline points="20 6 9 17 4 12"/></svg>',
+        'badge-error':    '<svg viewBox="0 0 24 24" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        'badge-warning':  '<svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg>'
+    };
 
-    var noteHTML   = note ? '<div style="background:' + (badgeClass==='badge-error'?'var(--red-bg)':'var(--orange-bg)') + ';padding:10px 14px;border-radius:10px;font-size:13px;color:var(--text-mid);font-weight:500;margin-bottom:16px;">' + note + '</div>' : '';
+    var noteHTML = note
+        ? '<div style="background:' + (badgeClass==='badge-error' ? 'var(--red-bg)' : 'var(--orange-bg)') +
+          ';padding:10px 14px;border-radius:10px;font-size:13px;color:var(--text-mid);font-weight:500;margin-bottom:16px;">' + note + '</div>'
+        : '';
+
     var actionHTML = '';
-    if (showAction && mode === 'signin')  actionHTML = '<button class="action-btn register-action" onclick="confirmSignIn()"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>CONFIRM SIGN IN</button>';
-    if (showAction && mode === 'signout') actionHTML = '<button class="action-btn return-action" onclick="confirmSignOut()"><svg viewBox="0 0 24 24" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>CONFIRM SIGN OUT</button>';
+    if (showAction && mode === 'signin')
+        actionHTML = '<button class="action-btn register-action" onclick="confirmSignIn()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>CONFIRM SIGN IN</button>';
+    if (showAction && mode === 'signout')
+        actionHTML = '<button class="action-btn return-action" onclick="confirmSignOut()"><svg viewBox="0 0 24 24" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>CONFIRM SIGN OUT</button>';
 
     card.innerHTML =
         '<div class="device-card-top ' + topClass + '">' +
-            '<div class="device-status-badge ' + badgeClass + '">' + badgeIcon + ' ' + badgeText + '</div>' +
-            '<div class="device-person">' + (data.name||'Unknown') + '</div>' +
-            '<div class="device-phone">' + (data.role||data.phone||'—') + '</div>' +
-            '<div class="device-code-display">' + data.code + '</div>' +
+            '<div class="device-status-badge ' + badgeClass + '">' + (badgeIcons[badgeClass]||'') + ' ' + badgeText + '</div>' +
+            '<div class="device-person">' + (data.name || 'Unknown') + '</div>' +
+            '<div class="device-sub">' + (data.role || '—') + '</div>' +
+            '<div class="device-code-display">' + (data.code || '—') + '</div>' +
         '</div>' +
         '<div class="device-body">' +
             noteHTML +
             '<div class="info-grid">' +
-                '<div class="info-cell"><div class="info-key">District</div><div class="info-val">' + (data.district||'—') + '</div></div>' +
-                '<div class="info-cell"><div class="info-key">Chiefdom</div><div class="info-val">' + (data.chiefdom||'—') + '</div></div>' +
-                '<div class="info-cell"><div class="info-key">Phone</div><div class="info-val">' + (data.phone||'—') + '</div></div>' +
-                '<div class="info-cell"><div class="info-key">Facility</div><div class="info-val">' + (data.facility||'—') + '</div></div>' +
+                '<div class="info-cell"><div class="info-key">ID Number</div><div class="info-val">' + (data.code || '—') + '</div></div>' +
+                '<div class="info-cell"><div class="info-key">Telephone</div><div class="info-val">' + (data.tel || '—') + '</div></div>' +
+                '<div class="info-cell"><div class="info-key">Role</div><div class="info-val">' + (data.role || '—') + '</div></div>' +
+                '<div class="info-cell"><div class="info-key">District</div><div class="info-val">' + (data.district || '—') + '</div></div>' +
             '</div>' +
             actionHTML +
         '</div>';
@@ -658,43 +589,52 @@ function scanAgain(mode) {
     startScan(mode);
 }
 
-// ── GAS SUBMIT ─────────────────────────────────────────────────
+// ── GAS SUBMIT ───────────────────────────────────────────────
 function submitToSheets(record, cb) {
-    var payload = Object.assign({}, record, { action2: 'handleSignInOut' });
-    fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body: JSON.stringify(payload) })
+    fetch(SCRIPT_URL, { method:'POST', mode:'no-cors', body: JSON.stringify(record) })
     .then(function(){ cb(); })
-    .catch(function(){ cb(); }); // fail open
+    .catch(function(){ cb(); }); // fail open — record is already saved locally
 }
 
-// ── HISTORY ───────────────────────────────────────────────────
+// ── HISTORY ─────────────────────────────────────────────────
 function updateHistory() {
     var today = getToday();
     var todayIns = signIns.filter(function(s){ return s.date===today; }).slice().reverse();
     document.getElementById('signin-count').textContent = todayIns.length;
-    document.getElementById('signin-list').innerHTML = todayIns.length ? todayIns.map(function(d){
-        return '<div class="history-item">' +
-            '<div class="history-dot signin"></div>' +
-            '<div class="history-info"><div class="history-name">' + (d.name||'Unknown') + '</div>' +
-            '<div class="history-meta">' + (d.district||'') + ' · ' + new Date(d.timestamp).toLocaleTimeString() + '</div></div>' +
-            '<div class="history-code">' + d.code + '</div></div>';
-    }).join('') : '<div class="history-empty">No sign-ins today</div>';
+    document.getElementById('signin-list').innerHTML = todayIns.length
+        ? todayIns.map(function(d){
+            return '<div class="history-item">' +
+                '<div class="history-dot signin"></div>' +
+                '<div class="history-info">' +
+                    '<div class="history-name">' + (d.name||'Unknown') + '</div>' +
+                    '<div class="history-meta">' + (d.role||'') + ' · ' + (d.district||'') + ' · ' + new Date(d.timestamp).toLocaleTimeString() + '</div>' +
+                '</div>' +
+                '<div class="history-code">' + (d.code||'') + '</div>' +
+            '</div>';
+        }).join('')
+        : '<div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No sign-ins today</div>';
 
     var todayOuts = signOuts.filter(function(s){ return s.date===today; }).slice().reverse();
     document.getElementById('signout-count').textContent = todayOuts.length;
-    document.getElementById('signout-list').innerHTML = todayOuts.length ? todayOuts.map(function(d){
-        return '<div class="history-item">' +
-            '<div class="history-dot signout"></div>' +
-            '<div class="history-info"><div class="history-name">' + (d.name||'Unknown') + '</div>' +
-            '<div class="history-meta">' + (d.district||'') + ' · ' + new Date(d.timestamp).toLocaleTimeString() + '</div></div>' +
-            '<div class="history-code">' + d.code + '</div></div>';
-    }).join('') : '<div class="history-empty">No sign-outs today</div>';
+    document.getElementById('signout-list').innerHTML = todayOuts.length
+        ? todayOuts.map(function(d){
+            return '<div class="history-item">' +
+                '<div class="history-dot signout"></div>' +
+                '<div class="history-info">' +
+                    '<div class="history-name">' + (d.name||'Unknown') + '</div>' +
+                    '<div class="history-meta">' + (d.role||'') + ' · ' + (d.district||'') + ' · ' + new Date(d.timestamp).toLocaleTimeString() + '</div>' +
+                '</div>' +
+                '<div class="history-code">' + (d.code||'') + '</div>' +
+            '</div>';
+        }).join('')
+        : '<div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No sign-outs today</div>';
 }
 
-// ── STATS ─────────────────────────────────────────────────────
+// ── STATS ────────────────────────────────────────────────────
 function getAllUsers() {
     var map = {};
     signIns.forEach(function(s) {
-        if (!map[s.code]) map[s.code] = { code:s.code, name:s.name||'Unknown', district:s.district||'', role:s.role||'', dates:{} };
+        if (!map[s.code]) map[s.code] = { code:s.code, name:s.name||'Unknown', district:s.district||'', role:s.role||'', tel:s.tel||'', dates:{} };
         if (s.name) map[s.code].name = s.name;
         map[s.code].dates[s.date] = { signIn: s.timestamp, signOut: null };
     });
@@ -727,23 +667,36 @@ function updateStats() {
 function renderUsers() {
     var users  = getAllUsers();
     var search = (document.getElementById('searchUsers').value||'').toLowerCase();
-    var filtered = search ? users.filter(function(u){ return (u.name||'').toLowerCase().includes(search)||(u.code||'').toLowerCase().includes(search); }) : users;
+    var filtered = search
+        ? users.filter(function(u){
+            return (u.name||'').toLowerCase().includes(search)
+                || (u.code||'').toLowerCase().includes(search)
+                || (u.role||'').toLowerCase().includes(search)
+                || (u.district||'').toLowerCase().includes(search);
+          })
+        : users;
     var colors = ['#0056a8','#0d9488','#7c3aed','#dc3545','#e6a800','#1e7e34','#b45309','#6366f1'];
-    document.getElementById('usersList').innerHTML = filtered.length ? filtered.map(function(u,i){
-        var initials = u.name ? u.name.split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase() : u.code.substring(0,2);
-        return '<div class="user-item">' +
-            '<div class="user-avatar" style="background:' + colors[i%colors.length] + '">' + initials + '</div>' +
-            '<div class="user-info">' +
-                '<div class="user-name">' + (u.name||u.code) + '</div>' +
-                '<div class="user-meta"><span>' + (u.district||'—') + '</span><span>' + (u.role||'—') + '</span></div>' +
-            '</div>' +
-            '<div style="text-align:right"><div class="user-days">' + u.totalDays + '</div><div class="user-days-lbl">DAYS</div>' +
-            '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">' + u.fullDays + ' full · ' + u.halfDays + ' half</div></div>' +
-        '</div>';
-    }).join('') : '<div class="history-empty">No matching staff</div>';
+    document.getElementById('usersList').innerHTML = filtered.length
+        ? filtered.map(function(u, i){
+            var initials = (u.name||u.code).split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase();
+            return '<div class="user-item">' +
+                '<div class="user-avatar" style="background:' + colors[i%colors.length] + '">' + initials + '</div>' +
+                '<div class="user-info">' +
+                    '<div class="user-name">' + (u.name||u.code) + '</div>' +
+                    '<div class="user-meta"><span>' + (u.role||'—') + '</span><span>' + (u.district||'—') + '</span></div>' +
+                    '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">📞 ' + (u.tel||'—') + ' · ' + (u.code||'') + '</div>' +
+                '</div>' +
+                '<div style="text-align:right">' +
+                    '<div class="user-days">' + u.totalDays + '</div>' +
+                    '<div class="user-days-lbl">DAYS</div>' +
+                    '<div style="font-size:10px;color:var(--text-light);margin-top:2px;">' + u.fullDays + ' full · ' + u.halfDays + ' half</div>' +
+                '</div>' +
+            '</div>';
+          }).join('')
+        : '<div class="history-empty" style="padding:30px;text-align:center;font-size:13px;color:var(--text-light);">No matching staff</div>';
 }
 
-// ── NOTIF ─────────────────────────────────────────────────────
+// ── NOTIF ────────────────────────────────────────────────────
 function showNotif(msg, type) {
     var el = document.getElementById('notif');
     el.textContent = msg;
