@@ -767,10 +767,11 @@
 
         const statusFilter = document.getElementById('targetStatusFilter')?.value || 'all';
         
-        // FIXED: Look for 'School Status' column, not 'status'
+        // FIXED: Read from GAS field 'school_status' which comes from CSV column 'School Status'
         function getSchoolStatus(school) {
-            // Try multiple possible column names
-            const status = school['School Status'] || school.status || school['Status'] || school['school_status'] || 'Old';
+            // Priority: GAS returns 'school_status' field
+            // The CSV column 'School Status' gets mapped to 'school_status' by GAS
+            const status = school.school_status || school['School Status'] || school.status || school['Status'] || 'Old';
             return String(status).trim().toLowerCase();
         }
         
@@ -795,6 +796,22 @@
         let oldSchools = 0, oldDone = 0;
         let newSchools = 0, newDone = 0;
         
+        // Debug: Log first school to see what status we get
+        if (districts.length > 0) {
+            const firstDistrict = districts[0];
+            const firstChiefdom = Object.keys(tree[firstDistrict].chiefdoms)[0];
+            if (firstChiefdom && tree[firstDistrict].chiefdoms[firstChiefdom].schools[0]) {
+                const sampleSchool = tree[firstDistrict].chiefdoms[firstChiefdom].schools[0];
+                console.log('[Targets] Sample school status:', {
+                    name: sampleSchool.name,
+                    'school_status': sampleSchool.school_status,
+                    'School Status': sampleSchool['School Status'],
+                    status: sampleSchool.status,
+                    raw: sampleSchool
+                });
+            }
+        }
+        
         districts.forEach(d => {
             Object.values(tree[d].chiefdoms).forEach(c => {
                 const allSchools = c.schools;
@@ -803,7 +820,7 @@
                 natSchools += filteredSchools.length;
                 natDone += filteredSchools.filter(s => submitted.has(s.key)).length;
                 
-                // Count Old vs New based on 'School Status' column
+                // Count Old vs New based on 'school_status' field
                 const oldOnes = allSchools.filter(s => {
                     const status = getSchoolStatus(s);
                     return status === 'old' || status === 'yes';
@@ -823,6 +840,12 @@
         const natPct = natSchools > 0 ? Math.round((natDone / natSchools) * 100) : 0;
         const oldPct = oldSchools > 0 ? Math.round((oldDone / oldSchools) * 100) : 0;
         const newPct = newSchools > 0 ? Math.round((newDone / newSchools) * 100) : 0;
+
+        console.log('[Targets] Status counts:', {
+            oldSchools, oldDone, oldPct,
+            newSchools, newDone, newPct,
+            natSchools, natDone, natPct
+        });
 
         let html = sheetBanner + `
         <div style="margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
@@ -972,7 +995,7 @@
 
                 html += `
                     <tr style="background:#f0f4f8;">
-                        <td style="color:#8090a0;font-size:11px;font-weight:700;">${ci+1}</td>
+                        <td style="color:#8090a0;font-size:11px;font-weight:700;">${ci+1}<tr>
                         <td style="font-weight:700;color:#004080;white-space:nowrap;">
                             📍 ${chiefdom}
                             <span style="font-size:10px;color:#607080;font-weight:400;margin-left:6px;">${phuKeys.length} PHU${phuKeys.length!==1?'s':''}</span>
@@ -1043,7 +1066,6 @@
             }
         });
     }
-
     // ── Open/close analysis ───────────────────────────────
     window.openAnalysisModal = async function(){
         const modal=document.getElementById('analysisModal');
